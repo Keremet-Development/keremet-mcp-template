@@ -17,7 +17,7 @@ import (
 )
 
 // Сквозной тест: собираем приложение целиком (без запуска портов), ставим перед ним httptest
-// и говорим с ним так же, как агент платформы (services/rag/app/mcp_client.py):
+// и говорим с ним так же, как агент платформы (keremet-agents, app/mcp_client.py):
 // initialize → notifications/initialized → tools/list → tools/call → DELETE.
 
 const (
