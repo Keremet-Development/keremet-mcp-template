@@ -44,7 +44,7 @@ docker build -t my-mcp .
 docker run --rm --env-file .env -p 8080:8080 -p 9090:9090 my-mcp
 ```
 
-На GitHub `.github/workflows/ci.yml` проверяет gofmt, vet, тесты с -race, сборку бинарника и образа на каждый push и pull request.
+На GitHub `.github/workflows/ci.yml` проверяет gofmt, vet, тесты с -race, сборку бинарника и образа на каждый push и pull request. Задания идут на раннере организации `local`. Образ из `main` и тегов `vX.Y.Z` публикуется в `ghcr.io/keremet-development/keremet-mcp-template` — [подробнее](https://github.com/Keremet-Development/keremet-deploy#проверки-на-github).
 
 Проверка руками:
 
