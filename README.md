@@ -44,6 +44,8 @@ docker build -t my-mcp .
 docker run --rm --env-file .env -p 8080:8080 -p 9090:9090 my-mcp
 ```
 
+На GitHub `.github/workflows/ci.yml` проверяет gofmt, vet, тесты с -race, сборку бинарника и образа на каждый push и pull request.
+
 Проверка руками:
 
 ```bash
