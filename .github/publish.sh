@@ -17,9 +17,20 @@ case "$GITHUB_REF" in
   refs/tags/v*)    tags+=("${GITHUB_REF#refs/tags/v}" latest) ;;
 esac
 
+# Первая публикация создаёт пакет, и ghcr.io выдаёт права на него не сразу: первый push может получить
+# denied. Поэтому пробуем ещё раз после паузы.
+push() {
+  local n
+  for n in 1 2 3; do
+    docker push "$1" && return 0
+    [ "$n" = 3 ] || { echo "push не прошёл, повтор через $((n * 15)) с"; sleep $((n * 15)); }
+  done
+  return 1
+}
+
 for t in "${tags[@]}"; do
   docker tag "$src" "$dst:$t"
-  docker push "$dst:$t"
+  push "$dst:$t"
   docker image rm "$dst:$t" >/dev/null
   echo "опубликован $dst:$t"
 done
