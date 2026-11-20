@@ -24,3 +24,14 @@ func TestValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestNoneWithSystemTokenRejected(t *testing.T) {
+	c := &Config{SystemURL: "http://sys", AuthMode: AuthNone, SystemToken: "server-key"}
+	if c.Validate() == nil {
+		t.Fatal("AUTH_MODE=none с SYSTEM_TOKEN должен отклоняться")
+	}
+	c.SystemToken = ""
+	if err := c.Validate(); err != nil {
+		t.Fatal(err)
+	}
+}

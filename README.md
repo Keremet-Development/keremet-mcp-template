@@ -62,7 +62,7 @@ curl -s localhost:8080/mcp \
 | `SYSTEM_URL` | — (обязательна) | API вашей системы. Токен сотрудника проверяется запросом `GET {SYSTEM_URL}/me` |
 | `AUTH_MODE` | `user_token` | `user_token`, `service_token` или `none` — как в консоли платформы |
 | `SERVICE_TOKEN` | — | служебный ключ платформы (см. ниже) |
-| `SYSTEM_TOKEN` | — | ключ сервера к системе для `service_token` и `none`; в `user_token` не используется |
+| `SYSTEM_TOKEN` | — | ключ сервера к системе для `service_token`; с `none` запуск откажет (система открылась бы всем от имени сервера), в `user_token` не используется |
 | `ADDR` | `:8080` | MCP и пробы |
 | `MCP_PATH` | `/mcp` | путь MCP-эндпоинта |
 | `METRICS_ADDR` | `:9090` | `/metrics`; пусто — не отдавать |

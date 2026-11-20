@@ -94,7 +94,14 @@ func (c *Config) Validate() error {
 	}
 
 	switch c.AuthMode {
-	case AuthUserToken, AuthNone:
+	case AuthNone:
+		if c.SystemToken != "" {
+			// без входа кто угодно, кто достучится до сервера, ходил бы в систему с ключом сервера
+			return errors.New("AUTH_MODE=none вместе с SYSTEM_TOKEN открывает систему от имени сервера всем: " +
+				"задайте AUTH_MODE=service_token (платформа передаёт SERVICE_TOKEN) или уберите SYSTEM_TOKEN")
+		}
+		return nil
+	case AuthUserToken:
 		return nil
 	case AuthServiceToken:
 		if c.ServiceToken == "" {
