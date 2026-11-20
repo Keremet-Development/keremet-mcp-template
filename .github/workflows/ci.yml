@@ -7,7 +7,6 @@ name: ci
 
 on:
   push:
-  pull_request:
 
 permissions:
   contents: read
@@ -22,6 +21,8 @@ jobs:
     container: golang:1.25.3-bookworm
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
@@ -43,6 +44,8 @@ jobs:
       IMAGE: ghcr.io/keremet-development/keremet-mcp-template
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: сборка
         run: |
           docker build -t "$IMAGE:run-$GITHUB_RUN_ID" \

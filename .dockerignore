@@ -2,3 +2,5 @@
 *.md
 Dockerfile
 go.sh
+.git
+.github
