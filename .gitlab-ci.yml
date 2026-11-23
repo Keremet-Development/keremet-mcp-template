@@ -1,0 +1,23 @@
+# CI/CD: проверка → образ в $REGISTRY_HOST/kyzmat-ai/mcp-template → (шаблон для команд: только тесты)
+# Ветки: dev — окружение dev (выкладка сразу), main — окружение main/прод (выкладка вручную).
+# Переменные группы: REGISTRY_HOST, REGISTRY_USER, REGISTRY_PASSWORD; раннер с тегом docker.
+
+variables:
+  GO_IMAGE: "registry.infocom.kg/dockerhub/library/golang:1.25.3-bookworm"
+
+default:
+  tags: [docker]
+
+stages: [test]
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "main"
+
+test:
+  stage: test
+  image: $GO_IMAGE
+  script:
+    - go vet ./...
+    - go test -race ./...

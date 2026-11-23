@@ -1,3 +1,8 @@
 .idea/
 .vscode/
 .claude/settings.local.json
+
+# Окружения с секретами (.env.dev и т.п.); образец — .env.example
+.env
+.env.*
+!.env.example
