@@ -1,6 +1,6 @@
 # MCP Template — шаблон MCP-сервера на Go
 
-> Часть [ИИ-платформы](https://github.com/Keremet-Development/keremet-deploy): общая схема, стенд и список репозиториев — в keremet-deploy.
+> Часть [ИИ-платформы](https://git.infocom.lan/kyzmat-ai/deploy): общая схема, стенд и список репозиториев — в deploy.
 
 Заготовка для команд, которые подключают свою систему (CRM, учёт, справочник…) к ИИ-платформе.
 Агент платформы ходит в этот сервер по **MCP Streamable HTTP** (версия протокола 2025-06-18),
@@ -44,7 +44,7 @@ docker build -t my-mcp .
 docker run --rm --env-file .env -p 8080:8080 -p 9090:9090 my-mcp
 ```
 
-На GitHub `.github/workflows/ci.yml` проверяет gofmt, vet, тесты с -race, сборку бинарника и образа на каждый push и pull request. Задания идут на раннере организации `local`. Образ из `main` и тегов `vX.Y.Z` публикуется в `ghcr.io/keremet-development/keremet-mcp-template` — [подробнее](https://github.com/Keremet-Development/keremet-deploy#проверки-на-github).
+В GitLab `.gitlab-ci.yml` запускает vet и тесты с -race на merge request и ветках `dev` и `main`; образ шаблон не публикует.
 
 Проверка руками:
 
@@ -78,7 +78,7 @@ curl -s localhost:8080/mcp \
 
 В консоли платформы: **MCP-серверы → добавить**.
 
-- **Адрес** — как его видит среда агентов (RAG) из своей сети, вместе с путём: `http://my-mcp:8080/mcp`.
+- **Адрес** — как его видит среда агентов (AI Agents) из своей сети, вместе с путём: `http://my-mcp:8080/mcp`.
 - **Как агент входит** — тот же режим, что `AUTH_MODE` сервера:
 
 | В консоли | `AUTH_MODE` | Что присылает платформа | Что делает сервер |
