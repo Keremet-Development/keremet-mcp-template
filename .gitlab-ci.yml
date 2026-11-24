@@ -1,6 +1,5 @@
-# CI/CD: проверка → образ в $REGISTRY_HOST/kyzmat-ai/mcp-template → (шаблон для команд: только тесты)
-# Ветки и теги: dev, main — тесты; тег vX.Y.Z — GitLab Release.
-# Переменные группы: REGISTRY_HOST, REGISTRY_USER, REGISTRY_PASSWORD; раннер с тегом docker.
+# CI/CD шаблона MCP-сервера для команд: только проверка.
+# Ветки и теги: dev, main — тесты; тег vX.Y.Z — GitLab Release. Раннер с тегом docker.
 
 variables:
   GO_IMAGE: "registry.infocom.kg/dockerhub/library/golang:1.25.3-bookworm"
