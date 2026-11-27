@@ -34,6 +34,8 @@ func TestGuard(t *testing.T) {
 		name       string
 		mode       config.AuthMode
 		service    string
+		requireKey bool
+		platform   string // X-Platform-Key
 		users      fakeUsers
 		header     string
 		wantStatus int
@@ -53,11 +55,25 @@ func TestGuard(t *testing.T) {
 		{name: "служебный ключ неверный", mode: config.AuthServiceToken, service: "svc",
 			header: "Bearer svc2", wantStatus: 401},
 		{name: "без входа", mode: config.AuthNone, wantStatus: 200, wantCaller: Caller{}},
+		{name: "ключ платформы обязателен: есть", mode: config.AuthUserToken, service: "svc", requireKey: true,
+			platform: "svc", header: "Bearer user-token", wantStatus: 200,
+			wantCaller: Caller{User: &system.User{ID: "42", Name: "Иванов Иван"}, Token: "user-token"}},
+		{name: "ключ платформы обязателен: нет — JWT в обход платформы", mode: config.AuthUserToken, service: "svc",
+			requireKey: true, header: "Bearer user-token", wantStatus: 401},
+		{name: "ключ платформы обязателен: неверный", mode: config.AuthUserToken, service: "svc", requireKey: true,
+			platform: "svc2", header: "Bearer user-token", wantStatus: 401},
+		{name: "ключ платформы обязателен: проверка до системы", mode: config.AuthUserToken, service: "svc",
+			requireKey: true, users: fakeUsers{down: true}, header: "Bearer user-token", wantStatus: 401},
+		{name: "ключ платформы обязателен: список служебным ключом", mode: config.AuthUserToken, service: "svc",
+			requireKey: true, header: "Bearer svc", wantStatus: 200, wantCaller: Caller{DiscoveryOnly: true}},
+		{name: "ключ платформы не обязателен — лишний заголовок не мешает", mode: config.AuthUserToken, service: "svc",
+			platform: "svc", header: "Bearer user-token", wantStatus: 200,
+			wantCaller: Caller{User: &system.User{ID: "42", Name: "Иванов Иван"}, Token: "user-token"}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &config.Config{AuthMode: tt.mode, ServiceToken: tt.service}
+			cfg := &config.Config{AuthMode: tt.mode, ServiceToken: tt.service, RequirePlatformKey: tt.requireKey}
 			guard := NewGuard(cfg, tt.users, slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 			var got Caller
@@ -70,6 +86,9 @@ func TestGuard(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/mcp", nil)
 			if tt.header != "" {
 				req.Header.Set("Authorization", tt.header)
+			}
+			if tt.platform != "" {
+				req.Header.Set(PlatformKeyHeader, tt.platform)
 			}
 			rec := httptest.NewRecorder()
 			h.ServeHTTP(rec, req)

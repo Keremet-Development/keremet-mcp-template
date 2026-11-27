@@ -42,6 +42,9 @@ type Config struct {
 	// ServiceToken — служебный ключ платформы. В режиме service_token обязателен;
 	// в режиме user_token необязателен: с ним платформа заранее узнаёт список инструментов.
 	ServiceToken string
+	// RequirePlatformKey — в режиме user_token принимать токен сотрудника только вместе с ключом платформы
+	// (заголовок X-Platform-Key = SERVICE_TOKEN): JWT, пришедший в обход платформы, получит 401.
+	RequirePlatformKey bool
 
 	// SystemURL — адрес API вашей системы, например https://crm.example.lan/api.
 	SystemURL string
@@ -60,16 +63,17 @@ type Config struct {
 // Load читает окружение и проверяет, что настройки согласованы.
 func Load() (*Config, error) {
 	cfg := &Config{
-		Addr:            env("ADDR", ":8080"),
-		MetricsAddr:     env("METRICS_ADDR", ":9090"),
-		Path:            env("MCP_PATH", "/mcp"),
-		AuthMode:        AuthMode(env("AUTH_MODE", string(AuthUserToken))),
-		ServiceToken:    os.Getenv("SERVICE_TOKEN"),
-		SystemURL:       os.Getenv("SYSTEM_URL"),
-		SystemToken:     os.Getenv("SYSTEM_TOKEN"),
-		LogLevel:        env("LOG_LEVEL", "info"),
-		SystemTimeout:   15 * time.Second,
-		ShutdownTimeout: 20 * time.Second,
+		Addr:               env("ADDR", ":8080"),
+		MetricsAddr:        env("METRICS_ADDR", ":9090"),
+		Path:               env("MCP_PATH", "/mcp"),
+		AuthMode:           AuthMode(env("AUTH_MODE", string(AuthUserToken))),
+		ServiceToken:       os.Getenv("SERVICE_TOKEN"),
+		RequirePlatformKey: os.Getenv("REQUIRE_PLATFORM_KEY") == "true" || os.Getenv("REQUIRE_PLATFORM_KEY") == "1",
+		SystemURL:          os.Getenv("SYSTEM_URL"),
+		SystemToken:        os.Getenv("SYSTEM_TOKEN"),
+		LogLevel:           env("LOG_LEVEL", "info"),
+		SystemTimeout:      15 * time.Second,
+		ShutdownTimeout:    20 * time.Second,
 	}
 
 	var err error
@@ -91,6 +95,10 @@ func Load() (*Config, error) {
 func (c *Config) Validate() error {
 	if c.SystemURL == "" {
 		return errors.New("SYSTEM_URL не задан: укажите адрес API вашей системы")
+	}
+	if c.RequirePlatformKey && (c.AuthMode != AuthUserToken || c.ServiceToken == "") {
+		return errors.New("REQUIRE_PLATFORM_KEY работает только с AUTH_MODE=user_token и заданным SERVICE_TOKEN " +
+			"(тот же ключ, что у сервера в консоли платформы)")
 	}
 
 	switch c.AuthMode {

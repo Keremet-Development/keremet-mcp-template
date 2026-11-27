@@ -14,6 +14,9 @@ func TestValidate(t *testing.T) {
 		{"service_token без ключа", Config{SystemURL: "http://s", AuthMode: AuthServiceToken}, true},
 		{"нет SYSTEM_URL", Config{AuthMode: AuthNone}, true},
 		{"неизвестный режим", Config{SystemURL: "http://s", AuthMode: "oauth"}, true},
+		{"ключ платформы с user_token и ключом", Config{SystemURL: "http://s", AuthMode: AuthUserToken, ServiceToken: "k", RequirePlatformKey: true}, false},
+		{"ключ платформы без SERVICE_TOKEN", Config{SystemURL: "http://s", AuthMode: AuthUserToken, RequirePlatformKey: true}, true},
+		{"ключ платформы с service_token", Config{SystemURL: "http://s", AuthMode: AuthServiceToken, ServiceToken: "k", RequirePlatformKey: true}, true},
 	}
 
 	for _, tt := range tests {

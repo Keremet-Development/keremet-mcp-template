@@ -28,6 +28,9 @@ type UserChecker interface {
 	Me(ctx context.Context, token string) (*system.User, error)
 }
 
+// PlatformKeyHeader — заголовок, в котором платформа присылает служебный ключ вместе с токеном сотрудника.
+const PlatformKeyHeader = "X-Platform-Key"
+
 // Guard пропускает к MCP только принятые токены.
 type Guard struct {
 	wrap func(http.Handler) http.Handler
@@ -42,7 +45,8 @@ func NewGuard(cfg *config.Config, users UserChecker, log *slog.Logger) *Guard {
 		return &Guard{wrap: func(next http.Handler) http.Handler { return next }}
 	}
 
-	v := &verifier{mode: cfg.AuthMode, serviceToken: cfg.ServiceToken, users: users, log: log}
+	v := &verifier{mode: cfg.AuthMode, serviceToken: cfg.ServiceToken, requireKey: cfg.RequirePlatformKey,
+		users: users, log: log}
 
 	return &Guard{wrap: sdkauth.RequireBearerToken(v.verify, &sdkauth.RequireBearerTokenOptions{
 		// Срок жизни токена знает только система, сервер его не проверяет.
@@ -56,13 +60,14 @@ func (g *Guard) Wrap(next http.Handler) http.Handler { return g.wrap(next) }
 type verifier struct {
 	mode         config.AuthMode
 	serviceToken string
+	requireKey   bool // REQUIRE_PLATFORM_KEY: токен сотрудника — только с X-Platform-Key
 	users        UserChecker
 	log          *slog.Logger
 }
 
 // verify вызывается на каждый HTTP-запрос к MCP. Ошибка с sdkauth.ErrInvalidToken — ответ 401,
 // любая другая (система недоступна) — ответ 500: это не «токен не принят».
-func (v *verifier) verify(ctx context.Context, token string, _ *http.Request) (*sdkauth.TokenInfo, error) {
+func (v *verifier) verify(ctx context.Context, token string, r *http.Request) (*sdkauth.TokenInfo, error) {
 	if v.mode == config.AuthServiceToken {
 		if !v.isServiceToken(token) {
 			return nil, fmt.Errorf("%w: неверный служебный ключ", sdkauth.ErrInvalidToken)
@@ -73,6 +78,11 @@ func (v *verifier) verify(ctx context.Context, token string, _ *http.Request) (*
 	// Режим user_token.
 	if v.isServiceToken(token) {
 		return tokenInfo(Caller{DiscoveryOnly: true}), nil
+	}
+	// Токен сотрудника принимаем только от платформы: она присылает служебный ключ рядом (X-Platform-Key).
+	// Проверяем до запроса в систему — JWT, пришедший в обход платформы, систему не нагружает.
+	if v.requireKey && !v.isServiceToken(r.Header.Get(PlatformKeyHeader)) {
+		return nil, fmt.Errorf("%w: нет ключа платформы (X-Platform-Key)", sdkauth.ErrInvalidToken)
 	}
 
 	// Каждый HTTP-запрос — отдельная проверка в системе. Если /me дорогой, добавьте здесь
